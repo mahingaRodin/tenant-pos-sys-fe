@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../../components/ui/button';
 import { ShoppingCart, LogIn, Mail, Lock, AlertCircle } from 'lucide-react';
@@ -19,10 +20,10 @@ const LoginPage = () => {
         try {
             const response = await authApi.login({ email, password });
 
-            // Backend returns AuthResponse containing token and user
-            if (response.data && response.data.token) {
+            // Backend returns AuthResponse containing jwt and user
+            if (response.data && response.data.jwt) {
                 // Determine roles or map user data as needed using useAuthStore
-                login(response.data.user || { email, role: 'ADMIN' }, response.data.token);
+                login(response.data.user || { email, role: 'ADMIN' }, response.data.jwt);
                 // Auth store redirection or logic can be handled here or in useEffect
             }
         } catch (err) {

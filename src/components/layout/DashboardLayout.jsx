@@ -10,7 +10,8 @@ import {
     LogOut,
     Store,
     Menu,
-    Bell
+    Bell,
+    ListFilter
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -23,10 +24,11 @@ const DashboardLayout = ({ children }) => {
     const navItems = [
         { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
         { name: 'POS Terminal', path: '/pos', icon: ShoppingCart },
-        { name: 'Products', path: '/products', icon: Package },
-        { name: 'Customers', path: '/customers', icon: Users },
-        { name: 'Stores & Branches', path: '/stores', icon: Store },
-        { name: 'Settings', path: '/settings', icon: Settings },
+        { name: 'Orders', path: '/dashboard/orders', icon: ListFilter },
+        { name: 'Inventory', path: '/dashboard/inventory', icon: Package },
+        { name: 'Products', path: '/dashboard/products', icon: Package },
+        { name: 'Stores & Branches', path: '/dashboard/stores', icon: Store },
+        { name: 'Settings', path: '/dashboard/settings', icon: Settings },
     ];
 
     return (
@@ -58,8 +60,8 @@ const DashboardLayout = ({ children }) => {
                                 key={item.name}
                                 to={item.path}
                                 className={`flex items-center px-3 py-2.5 rounded-lg transition-colors group ${isActive
-                                        ? 'bg-indigo-50 text-indigo-700'
-                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                                    ? 'bg-indigo-50 text-indigo-700'
+                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                     }`}
                             >
                                 <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'} ${!sidebarOpen ? 'mx-auto' : 'mr-3'}`} />

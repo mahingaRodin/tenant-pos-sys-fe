@@ -47,9 +47,9 @@ const RegisterPage = () => {
 
             const response = await authApi.register(userDto);
 
-            if (response.data && response.data.token) {
+            if (response.data && response.data.jwt) {
                 // Log user in automatically with the returned token
-                login(response.data.user || { email: formData.email, role: 'ADMIN' }, response.data.token);
+                login(response.data.user || { email: formData.email, role: 'ADMIN' }, response.data.jwt);
                 navigate('/dashboard');
             }
         } catch (err) {

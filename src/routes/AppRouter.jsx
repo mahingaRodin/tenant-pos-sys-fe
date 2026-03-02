@@ -12,6 +12,8 @@ import RegisterPage from '../pages/auth/RegisterPage';
 import DashboardOverview from '../pages/dashboard/DashboardOverview';
 import ProductsPage from '../pages/dashboard/ProductsPage';
 import StoresPage from '../pages/dashboard/StoresPage';
+import InventoryPage from '../pages/dashboard/InventoryPage';
+import OrdersPage from '../pages/dashboard/OrdersPage';
 import PosTerminal from '../pages/pos/PosTerminal';
 import LandingPage from '../pages/LandingPage';
 
@@ -65,7 +67,14 @@ export const router = createBrowserRouter([
                 path: 'stores',
                 element: <StoresPage />,
             },
-            // Add more nested dashboard routes here: /orders, /settings
+            {
+                path: 'inventory',
+                element: <InventoryPage />,
+            },
+            {
+                path: 'orders',
+                element: <OrdersPage />,
+            },
         ],
     },
     {
