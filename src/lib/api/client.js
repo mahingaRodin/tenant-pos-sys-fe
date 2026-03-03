@@ -3,8 +3,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 
 // Define the base API client
 export const apiClient = axios.create({
-    // baseURL: 'http://185.181.9.11:30645/msp/api',
-    baseURL: 'http://localhost:5000/msp/api',
+    baseURL: '/msp/api',
     headers: {
         'Content-Type': 'application/json',
     },

@@ -12,9 +12,14 @@ const OrdersPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const user = useAuthStore((state) => state.user);
-    const branchId = user?.branchId || '123e4567-e89b-12d3-a456-426614174000';
+    const branchId = user?.branchId;
 
     const fetchOrders = useCallback(async () => {
+        if (!branchId) {
+            setError('No branch associated with your profile.');
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {

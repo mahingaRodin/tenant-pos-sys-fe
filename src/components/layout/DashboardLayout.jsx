@@ -21,15 +21,21 @@ const DashboardLayout = ({ children }) => {
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
 
-    const navItems = [
-        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-        { name: 'POS Terminal', path: '/pos', icon: ShoppingCart },
-        { name: 'Orders', path: '/dashboard/orders', icon: ListFilter },
-        { name: 'Inventory', path: '/dashboard/inventory', icon: Package },
-        { name: 'Products', path: '/dashboard/products', icon: Package },
-        { name: 'Stores & Branches', path: '/dashboard/stores', icon: Store },
-        { name: 'Settings', path: '/dashboard/settings', icon: Settings },
+    const allNavItems = [
+        { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, roles: ['ROLE_STORE_ADMIN', 'ROLE_STORE_MANAGER', 'ROLE_BRANCH_MANAGER'] },
+        { name: 'POS Terminal', path: '/pos', icon: ShoppingCart, roles: ['ROLE_STORE_ADMIN', 'ROLE_BRANCH_CASHIER'] },
+        { name: 'Orders', path: '/dashboard/orders', icon: ListFilter, roles: ['ROLE_STORE_ADMIN', 'ROLE_STORE_MANAGER', 'ROLE_BRANCH_MANAGER'] },
+        { name: 'Inventory', path: '/dashboard/inventory', icon: Package, roles: ['ROLE_STORE_ADMIN', 'ROLE_STORE_MANAGER', 'ROLE_BRANCH_MANAGER'] },
+        { name: 'Products', path: '/dashboard/products', icon: Package, roles: ['ROLE_SUPER_ADMIN', 'ROLE_STORE_ADMIN', 'ROLE_STORE_MANAGER'] },
+        { name: 'Stores & Branches', path: '/dashboard/stores', icon: Store, roles: ['ROLE_SUPER_ADMIN', 'ROLE_STORE_ADMIN', 'ROLE_STORE_MANAGER'] },
+        { name: 'Settings', path: '/dashboard/settings', icon: Settings, roles: ['ROLE_STORE_ADMIN'] },
     ];
+
+    const navItems = allNavItems.filter(item =>
+        !item.roles ||
+        item.roles.includes(user?.role) ||
+        user?.role === 'ROLE_SUPER_ADMIN'
+    );
 
     return (
         <div className="min-h-screen bg-slate-50 flex">

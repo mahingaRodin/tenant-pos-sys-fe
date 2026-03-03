@@ -20,10 +20,15 @@ const PosTerminal = () => {
     const [orderSuccess, setOrderSuccess] = useState(null);
 
     const user = useAuthStore((state) => state.user);
-    const storeId = user?.storeId || '123e4567-e89b-12d3-a456-426614174000';
+    const storeId = user?.storeId;
     const branchId = user?.branchId || null;
 
     const fetchInitialData = useCallback(async () => {
+        if (!storeId) {
+            setError('No store associated with your account. Please contact admin.');
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -40,7 +45,7 @@ const PosTerminal = () => {
             }
         } catch (err) {
             console.error('Failed to fetch POS data:', err);
-            setError('Terminal connection issues. Please refresh.');
+            setError('Terminal connection issues. Please check your connection or store assignment.');
         } finally {
             setIsLoading(false);
         }
@@ -170,7 +175,12 @@ const PosTerminal = () => {
                         <div className="h-full flex flex-col items-center justify-center text-amber-600 gap-3 border-2 border-dashed border-amber-200 rounded-3xl p-8 text-center">
                             <AlertCircle className="w-12 h-12" />
                             <p className="font-medium">{error}</p>
-                            <Button variant="outline" onClick={fetchInitialData}>Try Reconnect</Button>
+                            <div className="flex gap-4">
+                                <Button variant="outline" onClick={fetchInitialData}>Try Reconnect</Button>
+                                <Button variant="destructive" onClick={() => useAuthStore.getState().logout()} className="bg-red-600">
+                                    Logout & Fix Account
+                                </Button>
+                            </div>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 text-center">

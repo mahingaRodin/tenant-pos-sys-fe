@@ -11,7 +11,7 @@ export const authApi = {
      * @returns {Promise<AxiosResponse<AuthResponse>>}
      */
     register: async (userData) => {
-        return apiClient.post('/auth/signup', userData);
+        return apiClient.post('auth/signup', userData);
     },
 
     /**
@@ -22,6 +22,6 @@ export const authApi = {
      * @returns {Promise<AxiosResponse<AuthResponse>>}
      */
     login: async (credentials) => {
-        return apiClient.post('/auth/login', credentials);
+        return apiClient.post('auth/login', credentials);
     },
 };

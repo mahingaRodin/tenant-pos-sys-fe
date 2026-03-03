@@ -11,9 +11,14 @@ const InventoryPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const user = useAuthStore((state) => state.user);
-    const branchId = user?.branchId || '123e4567-e89b-12d3-a456-426614174000';
+    const branchId = user?.branchId;
 
     const fetchInventory = useCallback(async () => {
+        if (!branchId) {
+            setError('No branch associated with your account.');
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         setError(null);
         try {
@@ -107,8 +112,8 @@ const InventoryPage = () => {
                                         <td className="px-6 py-4 text-sm text-slate-600 font-mono">{item.product?.code || 'N/A'}</td>
                                         <td className="px-6 py-4 text-center">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${item.quantity > 10 ? 'bg-emerald-50 text-emerald-700' :
-                                                    item.quantity > 0 ? 'bg-amber-50 text-amber-700' :
-                                                        'bg-red-50 text-red-700'
+                                                item.quantity > 0 ? 'bg-amber-50 text-amber-700' :
+                                                    'bg-red-50 text-red-700'
                                                 }`}>
                                                 {item.quantity > 10 ? 'In Stock' : item.quantity > 0 ? 'Low Stock' : 'Out of Stock'}
                                             </span>

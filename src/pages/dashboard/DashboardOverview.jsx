@@ -44,9 +44,13 @@ const DashboardOverview = () => {
     });
 
     const user = useAuthStore((state) => state.user);
-    const branchId = user?.branchId || '123e4567-e89b-12d3-a456-426614174000';
+    const branchId = user?.branchId;
 
     const fetchDashboardData = useCallback(async () => {
+        if (!branchId) {
+            setStats(prev => ({ ...prev, isLoading: false, error: 'No branch associated.' }));
+            return;
+        }
         setStats(prev => ({ ...prev, isLoading: true, error: null }));
         try {
             const [todayRes, recentRes] = await Promise.all([
@@ -93,6 +97,29 @@ const DashboardOverview = () => {
                 <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center gap-3 text-amber-800">
                     <AlertCircle className="shrink-0 w-5 h-5" />
                     <p className="text-sm font-medium">{stats.error}</p>
+                </div>
+            )}
+
+            {/* Quick Actions - Super Admin Priority */}
+            {(user?.role === 'ROLE_SUPER_ADMIN' || user?.role === 'ROLE_STORE_ADMIN') && (
+                <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-6 rounded-3xl shadow-xl shadow-indigo-100/50 text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
+                    <div className="relative z-10">
+                        <h2 className="text-xl font-bold mb-1">Administrative Quick Actions</h2>
+                        <p className="text-indigo-100 text-sm">Efficiently manage your store operations from here.</p>
+                    </div>
+                    <div className="flex gap-4 relative z-10">
+                        <a
+                            href="/pos"
+                            className="bg-white text-indigo-700 px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-slate-50 transition-all shadow-lg active:scale-95"
+                        >
+                            <ShoppingCart className="w-5 h-5" />
+                            Launch POS Terminal
+                        </a>
+                        <button className="bg-indigo-500/30 backdrop-blur-md border border-indigo-400/30 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-500/40 transition-all active:scale-95">
+                            System Settings
+                        </button>
+                    </div>
                 </div>
             )}
 

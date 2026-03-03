@@ -5,10 +5,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 const AuthLayout = ({ children }) => {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-    // If already authenticated, redirect to dashboard
-    if (isAuthenticated) {
-        return <Navigate to="/dashboard" replace />;
-    }
+    // If already authenticated, allow reaching login/register to switch accounts or refresh state
+    // Redirect logic removed to prevent "locked in" loops
 
     return (
         <div className="min-h-screen grid lg:grid-cols-2 bg-slate-50">

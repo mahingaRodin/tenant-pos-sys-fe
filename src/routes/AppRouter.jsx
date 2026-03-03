@@ -18,11 +18,23 @@ import PosTerminal from '../pages/pos/PosTerminal';
 import LandingPage from '../pages/LandingPage';
 
 // Protected Route Wrapper
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, allowedRoles }) => {
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const user = useAuthStore((state) => state.user);
+
     if (!isAuthenticated) {
         return <Navigate to="/login" replace />;
     }
+
+    const role = user?.role;
+    const isAuthorized = !allowedRoles || allowedRoles.includes(role) || role === 'ROLE_SUPER_ADMIN';
+
+    if (!isAuthorized) {
+        // Redirect to their default landing page if unauthorized
+        const targetPath = role === 'ROLE_BRANCH_CASHIER' ? '/pos' : '/dashboard';
+        return <Navigate to={targetPath} replace />;
+    }
+
     return children;
 };
 
@@ -50,7 +62,7 @@ export const router = createBrowserRouter([
     {
         path: '/dashboard',
         element: (
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['ROLE_SUPER_ADMIN', 'ROLE_STORE_ADMIN', 'ROLE_STORE_MANAGER', 'ROLE_BRANCH_MANAGER']}>
                 <DashboardLayout />
             </ProtectedRoute>
         ),
@@ -80,7 +92,7 @@ export const router = createBrowserRouter([
     {
         path: '/pos',
         element: (
-            <ProtectedRoute>
+            <ProtectedRoute allowedRoles={['ROLE_SUPER_ADMIN', 'ROLE_STORE_ADMIN', 'ROLE_BRANCH_CASHIER']}>
                 <PosLayout>
                     <PosTerminal />
                 </PosLayout>

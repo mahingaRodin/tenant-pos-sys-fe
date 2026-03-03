@@ -11,6 +11,7 @@ const LoginPage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const login = useAuthStore((state) => state.login);
+    const logout = useAuthStore((state) => state.logout);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,11 +21,24 @@ const LoginPage = () => {
         try {
             const response = await authApi.login({ email, password });
 
-            // Backend returns AuthResponse containing jwt and user
             if (response.data && response.data.jwt) {
-                // Determine roles or map user data as needed using useAuthStore
-                login(response.data.user || { email, role: 'ADMIN' }, response.data.jwt);
-                // Auth store redirection or logic can be handled here or in useEffect
+                // Clear old state first
+                logout();
+
+                const user = response.data.user;
+                const role = user?.role;
+
+                // Persist the full user object from the response
+                login(user, response.data.jwt);
+
+                // Role-based redirection
+                if (role === 'ROLE_SUPER_ADMIN' || role === 'ROLE_STORE_ADMIN' || role === 'ROLE_STORE_MANAGER' || role === 'ROLE_BRANCH_MANAGER') {
+                    window.location.href = '/dashboard';
+                } else if (role === 'ROLE_BRANCH_CASHIER') {
+                    window.location.href = '/pos';
+                } else {
+                    window.location.href = '/';
+                }
             }
         } catch (err) {
             console.error('Login failed:', err);

@@ -25,10 +25,14 @@ const ProductsPage = () => {
     const [totalElements, setTotalElements] = useState(0);
 
     const user = useAuthStore((state) => state.user);
-    // Use storeId from user or fallback to a default if not set (for multi-tenant context)
-    const storeId = user?.storeId || '123e4567-e89b-12d3-a456-426614174000'; // Fallback for dev
+    const storeId = user?.storeId;
 
     const fetchProducts = useCallback(async () => {
+        if (!storeId) {
+            setError('No store associated. Please assign a store to your profile.');
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
             let response;
