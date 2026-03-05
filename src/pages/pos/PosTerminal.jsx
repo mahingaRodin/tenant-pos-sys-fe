@@ -5,6 +5,7 @@ import { Input } from '../../components/ui/input';
 import { productApi } from '../../lib/api/products';
 import { categoryApi } from '../../lib/api/categories';
 import { orderApi } from '../../lib/api/orders';
+import { inventoryApi } from '../../lib/api/inventory';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const PosTerminal = () => {
@@ -32,33 +33,51 @@ const PosTerminal = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const [catRes, prodRes] = await Promise.all([
-                categoryApi.getByStoreId(storeId, 0, 50),
-                productApi.getByStoreId(storeId, 0, 100)
+            const [catRes, prodRes, invRes] = await Promise.all([
+                categoryApi.getByStoreId(storeId, 0, 50).catch(() => ({ data: { content: [] } })),
+                productApi.getByStoreId(storeId, 0, 200).catch(() => ({ data: { content: [] } })),
+                branchId ? inventoryApi.getByBranchId(branchId, 0, 500).catch(() => ({ data: { content: [] } })) : Promise.resolve({ data: { content: [] } })
             ]);
 
-            if (catRes.data && catRes.data.content) {
-                setCategories(['All', ...catRes.data.content.map(c => c.name)]);
-            }
-            if (prodRes.data && prodRes.data.content) {
-                setProducts(prodRes.data.content);
-            }
+            const categoryList = catRes.data?.content || [];
+            setCategories(['All', ...categoryList.map(c => c.name)]);
+
+            const productList = prodRes.data?.content || [];
+            const inventoryList = invRes.data?.content || [];
+
+            // Merge inventory into products
+            const enrichedProducts = productList.map(product => {
+                const inv = inventoryList.find(i => i.product_id === product.id || i.productId === product.id);
+                // Be very defensive about finding the price field
+                const basePrice = product.sellingPrice ?? product.selling_price ?? product.price ?? product.mrp ?? 0;
+                return {
+                    ...product,
+                    stock: Number(inv?.quantity ?? 0),
+                    price: Number(basePrice) || 0,
+                    categoryName: product.category?.name || product.categoryName || 'General'
+                };
+            });
+
+            setProducts(enrichedProducts);
         } catch (err) {
             console.error('Failed to fetch POS data:', err);
             setError('Terminal connection issues. Please check your connection or store assignment.');
         } finally {
             setIsLoading(false);
         }
-    }, [storeId]);
+    }, [storeId, branchId]);
 
     useEffect(() => {
         fetchInitialData();
     }, [fetchInitialData]);
 
     const addToCart = (product) => {
+        if (product.stock <= 0) return;
+
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
+                if (existing.quantity >= product.stock) return prev;
                 return prev.map(item =>
                     item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
                 );
@@ -72,9 +91,12 @@ const PosTerminal = () => {
     };
 
     const updateQuantity = (productId, delta) => {
+        const product = products.find(p => p.id === productId);
         setCart(prev => prev.map(item => {
             if (item.id === productId) {
-                const newQty = Math.max(0, item.quantity + delta);
+                let newQty = item.quantity + delta;
+                if (product && newQty > product.stock) newQty = product.stock;
+                newQty = Math.max(0, newQty);
                 return { ...item, quantity: newQty };
             }
             return item;
@@ -114,7 +136,7 @@ const PosTerminal = () => {
         }
     };
 
-    const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const subtotal = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (Number(item.quantity) || 0)), 0);
     const tax = subtotal * 0.08;
     const total = subtotal + tax;
 
@@ -193,17 +215,28 @@ const PosTerminal = () => {
                                     <button
                                         key={product.id}
                                         onClick={() => addToCart(product)}
-                                        className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 text-left hover:shadow-md hover:border-indigo-300 transition-all active:scale-95 group relative overflow-hidden"
+                                        disabled={product.stock <= 0}
+                                        className={`bg-white rounded-2xl shadow-sm border border-slate-200 p-4 text-left transition-all active:scale-95 group relative overflow-hidden ${product.stock <= 0 ? 'opacity-60 grayscale' : 'hover:shadow-md hover:border-indigo-300'}`}
                                     >
                                         <div className="aspect-square bg-slate-100 rounded-xl mb-3 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                                            <Package className="w-10 h-10 text-slate-400 group-hover:text-indigo-400" />
+                                            <Package className={`w-10 h-10 ${product.stock <= 0 ? 'text-slate-300' : 'text-slate-400 group-hover:text-indigo-400'}`} />
+                                            {product.stock <= 0 && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-white/20 backdrop-blur-[1px]">
+                                                    <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full rotate-[-15deg]">Out of Stock</span>
+                                                </div>
+                                            )}
                                         </div>
                                         <h3 className="font-semibold text-slate-900 truncate leading-tight">{product.name}</h3>
-                                        <p className="text-xs text-slate-500 mb-2 truncate">{product.categoryName || 'General'}</p>
+                                        <div className="flex items-center justify-between mt-1 mb-2">
+                                            <p className="text-xs text-slate-500 truncate">{product.categoryName || 'General'}</p>
+                                            <span className={`text-[10px] font-bold ${product.stock < 10 ? 'text-amber-500' : 'text-slate-400'}`}>
+                                                {product.stock} in stock
+                                            </span>
+                                        </div>
                                         <div className="flex items-center justify-between mt-auto">
                                             <span className="font-bold text-indigo-700">${product.price?.toFixed(2)}</span>
-                                            <span className="text-[10px] font-medium px-2 py-1 bg-slate-100 text-slate-600 rounded-md">
-                                                Active
+                                            <span className={`text-[10px] font-medium px-2 py-1 rounded-md ${product.stock > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                                                {product.stock > 0 ? 'Available' : 'Unavailable'}
                                             </span>
                                         </div>
                                     </button>
@@ -245,7 +278,7 @@ const PosTerminal = () => {
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-semibold text-slate-900 text-sm truncate">{item.name}</h4>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center gap-2">
-                                        <span className="font-medium text-slate-700">${item.price?.toFixed(2)}</span>
+                                        <span className="font-medium text-slate-700">${(Number(item.price) || 0).toFixed(2)}</span>
                                         <span>x</span>
                                         <div className="flex items-center gap-2 bg-slate-50 rounded-md px-1 py-0.5">
                                             <button

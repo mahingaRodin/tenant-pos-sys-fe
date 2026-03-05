@@ -7,7 +7,7 @@ export const storeApi = {
     getById: async (id) => {
         return apiClient.get(`/stores/${id}`);
     },
-    getAll: async (page = 0, size = 10, direction = 'DESC') => {
+    getAll: async (page = 0, size = 10 , direction = 'DESC') => {
         return apiClient.get(`/stores?page=${page}&size=${size}&direction=${direction}`);
     },
     getByAdmin: async () => {

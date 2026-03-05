@@ -1,9 +1,9 @@
 import { apiClient } from './client';
 
 export const customerApi = {
-    getByBranchId: async (branchId, params = {}) => {
+    getAll: async (params = {}) => {
         const { page = 0, size = 100, ...filters } = params;
-        return apiClient.get(`/customers/branch/${branchId}`, {
+        return apiClient.get('/customers', {
             params: { page, size, ...filters }
         });
     }
