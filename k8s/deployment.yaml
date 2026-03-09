@@ -25,7 +25,7 @@ spec:
     spec:
       containers:
         - name: pos-frontend
-          image: headie1/pos-frontend:0.0.2
+          image: headie1/pos-frontend:0.0.3
           ports:
             - containerPort: 80
           envFrom:
