@@ -27,12 +27,16 @@ import {
     ShoppingBag,
     ChevronRight,
     Search,
-    ArrowUpRight
+    ArrowUpRight,
+    Sun,
+    Moon,
+    LogOut
 } from 'lucide-react';
-import { format, parseISO, subMonths, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
+import { useUIStore } from '../../store/useUIStore';
 
 const SpendingChart = ({ data }) => {
     return (
@@ -106,9 +110,18 @@ const StoreDistributionChart = ({ data }) => {
 const CustomerDashboard = () => {
     const { t } = useTranslation();
     const user = useAuthStore((state) => state.user);
+    const logout = useAuthStore((state) => state.logout);
+    const { theme, toggleTheme } = useUIStore();
+    const navigate = useNavigate();
+
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     useEffect(() => {
         const fetchOrders = async () => {
@@ -178,9 +191,9 @@ const CustomerDashboard = () => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#080d16] text-white' : 'bg-slate-50 text-slate-900'}`}>
             {/* Header */}
-            <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
+            <header className={`${theme === 'dark' ? 'bg-[#0b121e] border-white/5' : 'bg-white border-slate-200'} border-b sticky top-0 z-40 transition-colors`}>
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <Link to="/shop" className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
@@ -189,14 +202,20 @@ const CustomerDashboard = () => {
                         <h1 className="text-xl font-bold text-slate-900">{t('dashboard.myActivity') || 'My Spending Activity'}</h1>
                     </div>
                     <div className="flex items-center gap-4">
+                        <button onClick={toggleTheme} className={`p-2 rounded-xl transition-colors ${theme === 'dark' ? 'hover:bg-white/10 text-slate-400' : 'hover:bg-slate-100 text-slate-500'}`}>
+                            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        </button>
                         <Link to="/shop">
-                            <Button variant="outline" className="rounded-xl font-semibold border-slate-200">
+                            <Button variant="outline" className={`rounded-xl font-semibold ${theme === 'dark' ? 'border-white/10 text-white hover:bg-white/5' : 'border-slate-200'}`}>
                                 {t('common.backToShop') || 'Back to Shop'}
                             </Button>
                         </Link>
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">
-                            {user?.firstName?.[0]}{user?.lastName?.[0]}
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${theme === 'dark' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-slate-100 text-slate-600'}`}>
+                            {user?.firstName?.[0] || 'U'}{user?.lastName?.[0] || ''}
                         </div>
+                        <button onClick={handleLogout} className={`p-2 rounded-xl transition-colors ${theme === 'dark' ? 'text-rose-400 hover:bg-rose-500/10' : 'text-rose-500 hover:bg-rose-50'}`}>
+                            <LogOut className="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
             </header>
@@ -215,10 +234,10 @@ const CustomerDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div className={`rounded-[2rem] p-8 shadow-sm flex flex-col justify-between ${theme === 'dark' ? 'bg-[#0f172a] border border-white/5' : 'bg-white border border-slate-200'}`}>
                         <div>
                             <p className="text-slate-500 font-medium mb-1">Monthly Spending</p>
-                            <h3 className="text-4xl font-black text-slate-900">${stats.monthlySpent.toFixed(2)}</h3>
+                            <h3 className={`text-4xl font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>${stats.monthlySpent.toFixed(2)}</h3>
                         </div>
                         <div className="mt-8 flex items-center gap-2 text-emerald-600">
                             <TrendingUp className="w-4 h-4" />
@@ -226,10 +245,10 @@ const CustomerDashboard = () => {
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-200 flex flex-col justify-between">
+                    <div className={`rounded-[2rem] p-8 shadow-sm flex flex-col justify-between ${theme === 'dark' ? 'bg-[#0f172a] border border-white/5' : 'bg-white border border-slate-200'}`}>
                         <div>
                             <p className="text-slate-500 font-medium mb-1">Avg. Per Order</p>
-                            <h3 className="text-4xl font-black text-slate-900">${stats.avgSpent.toFixed(2)}</h3>
+                            <h3 className={`text-4xl font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>${stats.avgSpent.toFixed(2)}</h3>
                         </div>
                         <div className="mt-8 flex items-center gap-2 text-slate-400">
                             <ShoppingCart className="w-4 h-4" />
@@ -240,9 +259,9 @@ const CustomerDashboard = () => {
 
                 {/* Charts Area */}
                 <div className="grid lg:grid-cols-2 gap-8">
-                    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
+                    <div className={`rounded-[2.5rem] p-8 shadow-sm ${theme === 'dark' ? 'bg-[#0f172a] border border-white/5' : 'bg-white border border-slate-200'}`}>
                         <div className="flex items-center justify-between mb-8">
-                            <h3 className="font-black text-slate-900 text-xl">Spending Trend</h3>
+                            <h3 className={`font-black text-xl ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Spending Trend</h3>
                             <Calendar className="w-5 h-5 text-slate-400" />
                         </div>
                         {stats.chartData.length > 0 ? (
@@ -254,9 +273,9 @@ const CustomerDashboard = () => {
                         )}
                     </div>
 
-                    <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-200">
+                    <div className={`rounded-[2.5rem] p-8 shadow-sm ${theme === 'dark' ? 'bg-[#0f172a] border border-white/5' : 'bg-white border border-slate-200'}`}>
                         <div className="flex items-center justify-between mb-8">
-                            <h3 className="font-black text-slate-900 text-xl">Where you spend</h3>
+                            <h3 className={`font-black text-xl ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Where you spend</h3>
                             <Store className="w-5 h-5 text-slate-400" />
                         </div>
                         <div className="flex flex-col md:flex-row items-center gap-8">
@@ -279,10 +298,10 @@ const CustomerDashboard = () => {
                 </div>
 
                 {/* Recent Orders List */}
-                <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-slate-200">
+                <div className={`rounded-[2.5rem] p-10 shadow-sm ${theme === 'dark' ? 'bg-[#0f172a] border border-white/5' : 'bg-white border border-slate-200'}`}>
                     <div className="flex items-center justify-between mb-8">
-                        <h3 className="font-black text-slate-900 text-2xl">Purchase History</h3>
-                        <div className="bg-slate-50 px-4 py-2 rounded-xl text-sm font-bold text-slate-500">
+                        <h3 className={`font-black text-2xl ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>Purchase History</h3>
+                        <div className={`px-4 py-2 rounded-xl text-sm font-bold ${theme === 'dark' ? 'bg-white/5 text-slate-400' : 'bg-slate-50 text-slate-500'}`}>
                             {orders.length} Total Orders
                         </div>
                     </div>
@@ -290,13 +309,13 @@ const CustomerDashboard = () => {
                     <div className="space-y-4">
                         {orders.length > 0 ? (
                             orders.map((order) => (
-                                <div key={order.id} className="group p-6 rounded-3xl hover:bg-slate-50 border border-transparent hover:border-slate-100 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div key={order.id} className={`group p-6 rounded-3xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${theme === 'dark' ? 'hover:bg-white/5 border-transparent hover:border-white/10' : 'hover:bg-slate-50 border-transparent hover:border-slate-100'}`}>
                                     <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center group-hover:bg-white transition-colors">
+                                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${theme === 'dark' ? 'bg-indigo-600/20 group-hover:bg-indigo-600/30' : 'bg-indigo-50 group-hover:bg-white'}`}>
                                             <ShoppingBag className="w-7 h-7 text-indigo-600" />
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                                            <h4 className={`font-bold transition-colors ${theme === 'dark' ? 'text-white group-hover:text-indigo-400' : 'text-slate-900 group-hover:text-indigo-600'}`}>
                                                 {order.store?.name || 'Local Retailer'}
                                             </h4>
                                             <div className="flex items-center gap-3 text-sm text-slate-500 mt-1">
@@ -306,16 +325,16 @@ const CustomerDashboard = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="flex items-center justify-between md:justify-end gap-8">
+                                     <div className="flex items-center justify-between md:justify-end gap-8">
                                         <div className="text-right">
-                                            <p className="text-lg font-black text-slate-900">${order.totalAmount?.toFixed(2)}</p>
+                                            <p className={`text-lg font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>${order.totalAmount?.toFixed(2)}</p>
                                             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded ${
-                                                order.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'
+                                                order.status === 'COMPLETED' ? (theme === 'dark' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600') : (theme === 'dark' ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-50 text-amber-600')
                                             }`}>
                                                 {order.status || 'PROCESSED'}
                                             </span>
                                         </div>
-                                        <button className="p-3 rounded-xl bg-slate-100 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                                        <button className={`p-3 rounded-xl transition-all ${theme === 'dark' ? 'bg-white/5 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-600 group-hover:text-white'}`}>
                                             <ArrowUpRight className="w-5 h-5" />
                                         </button>
                                     </div>

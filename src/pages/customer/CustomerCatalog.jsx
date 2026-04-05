@@ -4,6 +4,8 @@ import { storeApi } from '../../lib/api/stores';
 import { branchApi } from '../../lib/api/branches';
 import { inventoryApi } from '../../lib/api/inventories';
 import { useCartStore } from '../../store/useCartStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useUIStore } from '../../store/useUIStore';
 import {
     Search,
     ShoppingCart,
@@ -22,10 +24,13 @@ import {
     Package,
     AlertCircle,
     ChevronRight,
+    Sun,
+    Moon,
+    LogOut
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 /* ─── helpers ─────────────────────────────────────────────────── */
 const getPrice  = (p) => Number(p.sellingPrice ?? p.mrp ?? p.price ?? 0);
@@ -34,18 +39,20 @@ const itemStock = (p) => typeof p._stock === 'number' ? p._stock : null;
 const isInStock = (p) => { const s = itemStock(p); return s === null || s > 0; };
 
 /* ─── Category Filter Bar ─────────────────────────────────────── */
-const CategoryBar = ({ categories, selected, onSelect }) => (
-    <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide no-scrollbar">
-        <button
-            onClick={() => onSelect('All')}
-            className={`shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
-                selected === 'All'
-                    ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)]'
-                    : 'bg-[#1e293b]/50 text-slate-400 hover:bg-[#1e293b] hover:text-slate-200'
-            }`}
-        >
-            All
-        </button>
+const CategoryBar = ({ categories, selected, onSelect }) => {
+    const { theme } = useUIStore();
+    return (
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 scrollbar-hide no-scrollbar">
+            <button
+                onClick={() => onSelect('All')}
+                className={`shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
+                    selected === 'All'
+                        ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)]'
+                        : (theme === 'dark' ? 'bg-[#1e293b]/50 text-slate-400 hover:bg-[#1e293b] hover:text-slate-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700')
+                }`}
+            >
+                All
+            </button>
         {categories.map((cat) => (
             <button
                 key={cat}
@@ -53,17 +60,19 @@ const CategoryBar = ({ categories, selected, onSelect }) => (
                 className={`shrink-0 px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${
                     selected === cat
                         ? 'bg-indigo-600 text-white shadow-[0_0_20px_rgba(79,70,229,0.4)]'
-                        : 'bg-[#1e293b]/50 text-slate-400 hover:bg-[#1e293b] hover:text-slate-200'
+                        : (theme === 'dark' ? 'bg-[#1e293b]/50 text-slate-400 hover:bg-[#1e293b] hover:text-slate-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700')
                 }`}
             >
                 {cat}
             </button>
         ))}
     </div>
-);
+    );
+};
 
 /* ─── Product Card ─────────────────────────────────────────────── */
 const ProductCard = ({ product, onSelect }) => {
+    const { theme } = useUIStore();
     const addItem  = useCartStore((s) => s.addItem);
     const items    = useCartStore((s) => s.items);
     const [added, setAdded] = useState(false);
@@ -86,8 +95,8 @@ const ProductCard = ({ product, onSelect }) => {
         <div
             className={`group relative flex flex-col rounded-2xl border transition-all duration-500 overflow-hidden ${
                 instock
-                    ? 'bg-[#111827] border-white/5 hover:border-indigo-500/50 hover:bg-[#161e31] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]'
-                    : 'bg-[#0f141e] border-white/5 opacity-80'
+                    ? (theme === 'dark' ? 'bg-[#111827] border-white/5 hover:border-indigo-500/50 hover:bg-[#161e31] hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]' : 'bg-white border-slate-200 hover:border-indigo-500/50 hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)]')
+                    : (theme === 'dark' ? 'bg-[#0f141e] border-white/5 opacity-80' : 'bg-slate-50 border-slate-200 opacity-80')
             }`}
             onClick={() => onSelect(product)}
         >
@@ -136,8 +145,8 @@ const ProductCard = ({ product, onSelect }) => {
             {/* Content Area */}
             <div className="p-4 flex flex-col flex-1 gap-2">
                 <div className="flex-1">
-                    <h3 className={`font-black text-sm leading-snug line-clamp-2 mb-1 group-hover:text-indigo-400 transition-colors ${
-                        instock ? 'text-white' : 'text-slate-500'
+                    <h3 className={`font-black text-sm leading-snug line-clamp-2 mb-1 transition-colors ${
+                        instock ? (theme === 'dark' ? 'text-white group-hover:text-indigo-400' : 'text-slate-900 group-hover:text-indigo-600') : 'text-slate-500'
                     }`}>
                         {product.name}
                     </h3>
@@ -162,11 +171,11 @@ const ProductCard = ({ product, onSelect }) => {
                         disabled={!instock}
                         className={`h-9 px-4 rounded-xl text-xs font-black transition-all duration-300 flex items-center gap-2 ${
                             !instock
-                                ? 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed'
+                                ? (theme === 'dark' ? 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed' : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed')
                                 : added
                                 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/50'
                                 : inCart
-                                ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
+                                ? 'bg-indigo-500/20 text-indigo-500 border border-indigo-500/30 hover:bg-indigo-600 hover:text-white'
                                 : 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg shadow-indigo-900/50 hover:-translate-y-0.5'
                         }`}
                     >
@@ -188,6 +197,7 @@ const ProductCard = ({ product, onSelect }) => {
 
 /* ─── Product Modal ─────────────────────────────────────────────── */
 const ProductModal = ({ product, onClose }) => {
+    const { theme } = useUIStore();
     const [storeInfo, setStoreInfo] = useState(null);
     const [branches, setBranches]   = useState([]);
     const [loading, setLoading]     = useState(true);
@@ -218,7 +228,7 @@ const ProductModal = ({ product, onClose }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
             <div
-                className="bg-[#0f172a] border border-white/10 w-full sm:max-w-4xl sm:rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col md:flex-row max-h-[95vh] sm:max-h-[85vh] rounded-t-[2.5rem]"
+                className={`${theme === 'dark' ? 'bg-[#0f172a] border-white/10' : 'bg-white border-slate-200'} border w-full sm:max-w-4xl sm:rounded-[2.5rem] shadow-[0_40px_100px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col md:flex-row max-h-[95vh] sm:max-h-[85vh] rounded-t-[2.5rem]`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Image Section */}
@@ -260,12 +270,12 @@ const ProductModal = ({ product, onClose }) => {
                         </div>
 
                         <div className="space-y-1">
-                            <h2 className="text-3xl sm:text-4xl font-black text-white leading-tight tracking-tight">{product.name}</h2>
+                            <h2 className={`text-3xl sm:text-4xl font-black leading-tight tracking-tight ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{product.name}</h2>
                             {product.brand && <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.2em]">{product.brand}</p>}
                         </div>
 
                         <div className="flex items-baseline gap-4 pt-2">
-                            <span className="text-4xl font-black text-white">${price.toFixed(2)}</span>
+                            <span className={`text-4xl font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>${price.toFixed(2)}</span>
                             {product.mrp && product.mrp > price && (
                                 <span className="text-lg text-slate-500 line-through font-bold decoration-rose-500/30 decoration-2">
                                     ${Number(product.mrp).toFixed(2)}
@@ -277,15 +287,15 @@ const ProductModal = ({ product, onClose }) => {
                     <div className="space-y-4">
                         <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Quick Info</h4>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="bg-white/5 border border-white/5 p-4 rounded-3xl">
-                                <Package className="w-5 h-5 text-indigo-400 mb-2" />
+                            <div className={`${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200'} border p-4 rounded-3xl`}>
+                                <Package className="w-5 h-5 text-indigo-500 mb-2" />
                                 <p className="text-xs text-slate-500 font-bold mb-1">Availability</p>
-                                <p className="text-sm font-black text-white">{stock !== null ? `${stock} in Stock` : 'Unlimited'}</p>
+                                <p className={`text-sm font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{stock !== null ? `${stock} in Stock` : 'Unlimited'}</p>
                             </div>
-                            <div className="bg-white/5 border border-white/5 p-4 rounded-3xl">
-                                <Store className="w-5 h-5 text-indigo-400 mb-2" />
+                            <div className={`${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200'} border p-4 rounded-3xl`}>
+                                <Store className="w-5 h-5 text-indigo-500 mb-2" />
                                 <p className="text-xs text-slate-500 font-bold mb-1">Store Network</p>
-                                <p className="text-sm font-black text-white">{product.storeName || 'Partner Store'}</p>
+                                <p className={`text-sm font-black ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{product.storeName || 'Partner Store'}</p>
                             </div>
                         </div>
                     </div>
@@ -298,24 +308,24 @@ const ProductModal = ({ product, onClose }) => {
                     )}
 
                     {/* Action Area */}
-                    <div className="mt-auto pt-6 border-t border-white/5">
+                    <div className={`mt-auto pt-6 border-t ${theme === 'dark' ? 'border-white/5' : 'border-slate-200'}`}>
                         {!instock ? (
-                            <div className="w-full h-16 rounded-[1.5rem] bg-white/5 border border-white/5 flex items-center justify-center text-slate-600 font-black tracking-widest uppercase text-xs">
+                            <div className={`w-full h-16 rounded-[1.5rem] flex items-center justify-center font-black tracking-widest uppercase text-xs ${theme === 'dark' ? 'bg-white/5 border border-white/5 text-slate-600' : 'bg-slate-100 border border-slate-200 text-slate-400'}`}>
                                 Sold Out — Notify me when back
                             </div>
                         ) : cartItem ? (
                             <div className="flex items-center justify-between gap-6">
-                                <div className="flex items-center gap-4 bg-white/5 border border-white/5 rounded-[1.5rem] p-1.5 px-3">
+                                <div className={`flex items-center gap-4 rounded-[1.5rem] p-1.5 px-3 border ${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-slate-50 border-slate-200'}`}>
                                     <button
                                         onClick={() => cartItem.quantity <= 1 ? removeItem(cartItem.id, cartItem.branchId) : updateQty(cartItem.id, cartItem.branchId, cartItem.quantity - 1)}
-                                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white"
+                                        className={`h-10 w-10 flex items-center justify-center rounded-xl transition-colors ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-white' : 'bg-white border hover:bg-slate-50 text-slate-700'}`}
                                     >
                                         <Minus className="w-4 h-4" />
                                     </button>
-                                    <span className="w-8 text-center font-black text-white text-lg">{cartItem.quantity}</span>
+                                    <span className={`w-8 text-center font-black text-lg ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>{cartItem.quantity}</span>
                                     <button
                                         onClick={() => updateQty(cartItem.id, cartItem.branchId, cartItem.quantity + 1)}
-                                        className="h-10 w-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-white"
+                                        className={`h-10 w-10 flex items-center justify-center rounded-xl transition-colors ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-white' : 'bg-white border hover:bg-slate-50 text-slate-700'}`}
                                     >
                                         <Plus className="w-4 h-4" />
                                     </button>
@@ -413,6 +423,9 @@ const CartDrawer = ({ open, onClose }) => {
 /* ─── Main Page ─────────────────────────────────────────────────── */
 const CustomerCatalog = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const { theme, toggleTheme } = useUIStore();
+    const logout = useAuthStore((s) => s.logout);
 
     const [products, setProducts]   = useState([]);
     const [loading, setLoading]     = useState(true);
@@ -424,6 +437,11 @@ const CustomerCatalog = () => {
     const [cartOpen, setCartOpen]   = useState(false);
 
     const cartCount = useCartStore((s) => s.getTotalItems());
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     const fetchAll = useCallback(async () => {
         setLoading(true); setError(null); setNoStores(false);
@@ -516,9 +534,9 @@ const CustomerCatalog = () => {
     }, [products, search, activeCategory]);
 
     return (
-        <div className="min-h-screen bg-[#080d16] text-white selection:bg-indigo-500/30">
+        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-[#080d16] text-white selection:bg-indigo-500/30' : 'bg-slate-50 text-slate-900 selection:bg-indigo-300/30'}`}>
             {/* Header */}
-            <header className="bg-[#080d16]/80 backdrop-blur-2xl border-b border-white/5 sticky top-0 z-40">
+            <header className={`${theme === 'dark' ? 'bg-[#080d16]/80 border-white/5' : 'bg-white/80 border-slate-200'} backdrop-blur-2xl border-b sticky top-0 z-40 transition-colors`}>
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-8">
                     <Link to="/" className="flex items-center gap-3">
                         <div className="w-11 h-11 bg-gradient-to-tr from-indigo-600 to-indigo-400 rounded-2xl flex items-center justify-center shadow-2xl shadow-indigo-900/50">
@@ -542,16 +560,22 @@ const CustomerCatalog = () => {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <Link to="/my-dashboard" className="hidden md:flex p-3 bg-white/5 rounded-2xl hover:bg-white/10 transition-all text-slate-400 hover:text-white border border-white/5">
+                        <button onClick={toggleTheme} className={`p-3 rounded-2xl transition-all border ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border-white/5' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 border-slate-200'}`}>
+                            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                        </button>
+                        <Link to="/my-dashboard" className={`hidden md:flex p-3 rounded-2xl transition-all border ${theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white border-white/5' : 'bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 border-slate-200'}`}>
                             <LayoutDashboard className="w-5 h-5" />
                         </Link>
-                        <button onClick={() => setCartOpen(true)} className="relative p-3 bg-indigo-600/10 rounded-2xl hover:bg-indigo-600/20 transition-all text-indigo-400 border border-indigo-500/20">
+                        <button onClick={() => setCartOpen(true)} className="relative p-3 bg-indigo-600/10 rounded-2xl hover:bg-indigo-600/20 transition-all text-indigo-500 border border-indigo-500/20">
                             <ShoppingCart className="w-5 h-5" />
                             {cartCount > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center shadow-lg shadow-rose-900/50 border-2 border-[#080d16]">
+                                <span className={`absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-black h-5 w-5 rounded-full flex items-center justify-center shadow-lg shadow-rose-900/50 border-2 ${theme === 'dark' ? 'border-[#080d16]' : 'border-white'}`}>
                                     {cartCount > 9 ? '9+' : cartCount}
                                 </span>
                             )}
+                        </button>
+                         <button onClick={handleLogout} className={`p-3 rounded-2xl transition-all border ${theme === 'dark' ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border-rose-500/20' : 'bg-rose-50 text-rose-500 hover:bg-rose-100 border-rose-100'}`}>
+                            <LogOut className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
@@ -563,12 +587,12 @@ const CustomerCatalog = () => {
                 <div className="space-y-8">
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                         <div className="space-y-2">
-                            <h1 className="text-4xl sm:text-5xl font-black text-white italic tracking-tighter">EXPLORE PRODUCTS</h1>
+                            <h1 className={`text-4xl sm:text-5xl font-black italic tracking-tighter ${theme === 'dark' ? 'text-white' : 'text-slate-900'}`}>EXPLORE PRODUCTS</h1>
                             <p className="text-slate-500 font-bold max-w-xl text-sm uppercase tracking-widest">Premium quality goods from our network of verified store partners.</p>
                         </div>
                         {!loading && products.length > 0 && (
-                            <div className="flex items-center gap-3 bg-white/5 border border-white/5 p-2 px-4 rounded-2xl">
-                                <Tag className="w-4 h-4 text-indigo-400" />
+                            <div className={`flex items-center gap-3 p-2 px-4 rounded-2xl border ${theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-white border-slate-200'}`}>
+                                <Tag className="w-4 h-4 text-indigo-500" />
                                 <span className="text-xs font-black text-slate-400">
                                     {filtered.length} AVAILABLE ITEMS
                                 </span>
