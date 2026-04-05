@@ -119,8 +119,10 @@ const CustomerDashboard = () => {
     const [error, setError] = useState(null);
 
     const handleLogout = () => {
-        logout();
-        navigate('/login');
+        if (window.confirm(t('common.logoutConfirmationMessage') || 'Are you sure you want to log out?')) {
+            logout();
+            navigate('/login');
+        }
     };
 
     useEffect(() => {
@@ -223,7 +225,7 @@ const CustomerDashboard = () => {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-indigo-600 rounded-[2rem] p-8 text-white shadow-xl shadow-indigo-100 flex flex-col justify-between group overflow-hidden relative">
+                    <div className={`bg-indigo-600 rounded-[2rem] p-8 text-white shadow-xl ${theme === 'dark' ? 'shadow-indigo-500/20' : 'shadow-indigo-100'} flex flex-col justify-between group overflow-hidden relative`}>
                         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-500"></div>
                         <div className="relative z-10">
                             <p className="text-indigo-100 font-medium mb-1">Total Spent</p>
@@ -341,11 +343,11 @@ const CustomerDashboard = () => {
                                 </div>
                             ))
                         ) : (
-                            <div className="text-center py-20 bg-slate-50/50 rounded-3xl border border-dashed border-slate-200">
-                                <Search className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                                <p className="text-slate-500 font-medium">No orders found. Time to go shopping!</p>
+                            <div className={`text-center py-20 rounded-3xl border border-dashed ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-slate-50/50 border-slate-200'}`}>
+                                <Search className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-slate-700' : 'text-slate-200'}`} />
+                                <p className={`font-medium ${theme === 'dark' ? 'text-slate-400' : 'text-slate-500'}`}>No orders found. Time to go shopping!</p>
                                 <Link to="/shop">
-                                    <Button variant="link" className="text-indigo-600 mt-2 font-bold">Browse Catalog</Button>
+                                    <Button variant="link" className={`mt-2 font-bold ${theme === 'dark' ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-700'}`}>Browse Catalog</Button>
                                 </Link>
                             </div>
                         )}

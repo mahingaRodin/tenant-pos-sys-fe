@@ -439,8 +439,10 @@ const CustomerCatalog = () => {
     const cartCount = useCartStore((s) => s.getTotalItems());
 
     const handleLogout = () => {
-        logout();
-        navigate('/login');
+        if (window.confirm(t('common.logoutConfirmationMessage') || 'Are you sure you want to log out?')) {
+            logout();
+            navigate('/login');
+        }
     };
 
     const fetchAll = useCallback(async () => {
@@ -480,17 +482,27 @@ const CustomerCatalog = () => {
                     );
 
                     const stockMap = {};
+                    const stockMapBySku = {};
                     invResults.forEach((r, idx) => {
                         if (r.status !== 'fulfilled') return;
                         const inv = r.value.data?.content || r.value.data || [];
                         inv.forEach((i) => {
-                            const pid = i.productId || i.product?.id;
-                            if (pid) stockMap[pid] = (stockMap[pid] || 0) + (i.quantity || 0);
+                            const pid = i.productId || i.product?.id || i.product_id;
+                            const psku = i.productSku || i.product?.sku;
+                            const qty = Number(i.quantity) || 0;
+                            if (pid) stockMap[pid] = (stockMap[pid] || 0) + qty;
+                            if (psku) stockMapBySku[psku] = (stockMapBySku[psku] || 0) + qty;
                         });
                     });
 
                     return prods.map((p) => {
-                        const stock = stockMap.hasOwnProperty(p.id) ? stockMap[p.id] : 0;
+                        let stock = 0;
+                        if (stockMap.hasOwnProperty(p.id)) {
+                            stock = stockMap[p.id];
+                        } else if (p.sku && stockMapBySku.hasOwnProperty(p.sku)) {
+                            stock = stockMapBySku[p.sku];
+                        }
+                        
                         return {
                             ...p,
                             price: Number(p.sellingPrice ?? p.mrp ?? 0),
